@@ -2,56 +2,51 @@ import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema(
   {
-    name: { 
-      type: String, 
+    name: {
+      type: String,
       required: true,
       trim: true
     },
-
-    email: { 
-      type: String, 
-      required: true, 
+    email: {
+      type: String,
+      required: true,
       unique: true,
       lowercase: true,
-      trim: true,
-      match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email']
+      index: true
     },
-
-    password: { 
-      type: String, 
+    passwordHash: {
+      type: String,
+      required: true
+    },
+    role: {
+      type: String,
+      enum: ['PLATFORM_ADMIN', 'FOUNDER', 'INVESTOR'],
       required: true,
+      index: true
+    },
+    investorProfile: {
+      totalInvested: {
+        type: Number,
+        default: 0
+      },
+      accreditationStatus: {
+        type: Boolean,
+        default: false
+      }
+    },
+    startupId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Startup',
+      index: true
+    },
+    googleCalendarToken: {
+      type: String,
       select: false
-    },
-
-    role: { 
-      type: String, 
-      enum: ['admin', 'investor', 'founder'], 
-      required: true 
-    },
-
-    isVerified: { 
-      type: Boolean, 
-      default: false
-    },
-
-    isActive: { 
-      type: Boolean, 
-      default: true
-    },
-
-    founderProfile: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: 'Founder' 
-    },
-
-    investorProfile: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: 'Investor' 
     }
   },
-  { timestamps: true } 
+  { 
+    timestamps: true 
+  }
 );
-
-userSchema.index({ email: 1 });
 
 export default mongoose.model('User', userSchema);
