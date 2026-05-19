@@ -6,6 +6,7 @@ import morgan from 'morgan';
 
 import connectDB from './src/config/db.js';
 import authRoutes from './src/routes/authRoutes.js';
+import startupRoutes from './src/routes/startupRoutes.js';
 
 dotenv.config();
 
@@ -35,7 +36,7 @@ app.get('/health', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
-
+app.use('/api/startups', startupRoutes);
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
