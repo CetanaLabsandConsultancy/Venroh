@@ -7,7 +7,8 @@ import {
   getStartupById,
   updateMyStartup,
   verifyStartup,
-  unverifyStartup
+  unverifyStartup,
+  deleteStartup
 } from '../controllers/startupController.js';
 
 import {
@@ -17,53 +18,20 @@ import {
 
 const router = express.Router();
 
-router.post(
-  '/',
-  protect,
-  authorizeRoles('FOUNDER'),
-  createStartup
-);
+router.post('/', protect, authorizeRoles('founder'), createStartup);
 
-router.get(
-  '/',
-  protect,
-  authorizeRoles('PLATFORM_ADMIN', 'FOUNDER', 'INVESTOR'),
-  getStartups
-);
+router.get('/', protect, getStartups);
 
-router.get(
-  '/my',
-  protect,
-  authorizeRoles('FOUNDER'),
-  getMyStartup
-);
+router.get('/my', protect, authorizeRoles('founder'), getMyStartup);
 
-router.put(
-  '/my',
-  protect,
-  authorizeRoles('FOUNDER'),
-  updateMyStartup
-);
+router.put('/my', protect, authorizeRoles('founder'), updateMyStartup);
 
-router.patch(
-  '/:id/verify',
-  protect,
-  authorizeRoles('PLATFORM_ADMIN'),
-  verifyStartup
-);
+router.get('/:id', protect, getStartupById);
 
-router.patch(
-  '/:id/unverify',
-  protect,
-  authorizeRoles('PLATFORM_ADMIN'),
-  unverifyStartup
-);
+router.patch('/:id/verify', protect, authorizeRoles('admin'), verifyStartup);
 
-router.get(
-  '/:id',
-  protect,
-  authorizeRoles('PLATFORM_ADMIN', 'FOUNDER', 'INVESTOR'),
-  getStartupById
-);
+router.patch('/:id/unverify', protect, authorizeRoles('admin'), unverifyStartup);
+
+router.delete('/:id', protect, authorizeRoles('admin'), deleteStartup);
 
 export default router;

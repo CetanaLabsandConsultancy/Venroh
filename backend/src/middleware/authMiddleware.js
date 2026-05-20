@@ -5,17 +5,16 @@ export const protect = async (req, res, next) => {
   try {
     let token;
 
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith('Bearer')
-    ) {
-      token = req.headers.authorization.split(' ')[1];
+    const authHeader = req.headers.authorization;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
     }
 
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'Access denied. No token provided.'
+        message: 'Not authorized, token missing'
       });
     }
 
@@ -34,29 +33,35 @@ export const protect = async (req, res, next) => {
 
     next();
   } catch (error) {
+    console.error('Auth Middleware Error:', error);
+
     return res.status(401).json({
       success: false,
-      message: 'Invalid or expired token'
+      message: 'Not authorized, token failed'
     });
   }
 };
 
 export const authorizeRoles = (...roles) => {
   return (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Not authorized'
-      });
-    }
-
-    if (!roles.includes(req.user.role)) {
+    if (!req.user || !roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: 'Forbidden. You do not have permission.'
+        message: 'Access denied'
       });
     }
 
     next();
   };
+};
+
+export const requireVerifiedUser = (req, res, next) => {
+  if (!req.user.isVerified) {
+    return res.status(403).json({
+      success: false,
+      message: 'Account is not verified by admin yet'
+    });
+  }
+
+  next();
 };

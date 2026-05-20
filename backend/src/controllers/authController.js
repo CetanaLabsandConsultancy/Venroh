@@ -1,6 +1,36 @@
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
+import Startup from '../models/Startup.js';
 import generateToken from '../utils/generateToken.js';
+
+const buildUserResponse = async (user) => {
+  let startup = null;
+
+  if (user.role === 'founder') {
+    startup = await Startup.findOne({ founderId: user._id }).select(
+      '_id companyName cin mcaStatus valuationAsk pitchDeckUrl isLive'
+    );
+  }
+
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    isVerified: user.isVerified,
+    startup: startup
+      ? {
+          id: startup._id,
+          companyName: startup.companyName,
+          cin: startup.cin,
+          mcaStatus: startup.mcaStatus,
+          valuationAsk: startup.valuationAsk,
+          pitchDeckUrl: startup.pitchDeckUrl,
+          isLive: startup.isLive
+        }
+      : null
+  };
+};
 
 export const registerUser = async (req, res) => {
   try {
@@ -13,12 +43,17 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    const allowedRoles = ['PLATFORM_ADMIN', 'FOUNDER', 'INVESTOR'];
+    /**
+     * Important:
+     * Do NOT allow public users to register as admin.
+     * Admin should be created manually or through a protected seed script.
+     */
+    const allowedRoles = ['founder', 'investor'];
 
     if (!allowedRoles.includes(role)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid role'
+        message: 'Invalid role. Allowed roles: founder, investor'
       });
     }
 
@@ -41,32 +76,34 @@ export const registerUser = async (req, res) => {
     }
 
     const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     const user = await User.create({
-      name,
+      name: name.trim(),
       email: normalizedEmail,
-      passwordHash,
+      password: hashedPassword,
       role
     });
 
     const token = generateToken(user._id);
 
+    const userResponse = await buildUserResponse(user);
+
     return res.status(201).json({
       success: true,
       message: 'User registered successfully',
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        startupId: user.startupId || null,
-        investorProfile: user.investorProfile || null
-      }
+      user: userResponse
     });
   } catch (error) {
     console.error('Register Error:', error);
+
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: 'User already exists with this email'
+      });
+    }
 
     return res.status(500).json({
       success: false,
@@ -97,7 +134,7 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    const isPasswordCorrect = await bcrypt.compare(password, user.passwordHash);
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
     if (!isPasswordCorrect) {
       return res.status(401).json({
@@ -108,18 +145,13 @@ export const loginUser = async (req, res) => {
 
     const token = generateToken(user._id);
 
+    const userResponse = await buildUserResponse(user);
+
     return res.status(200).json({
       success: true,
       message: 'Login successful',
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        startupId: user.startupId || null,
-        investorProfile: user.investorProfile || null
-      }
+      user: userResponse
     });
   } catch (error) {
     console.error('Login Error:', error);
@@ -133,16 +165,11 @@ export const loginUser = async (req, res) => {
 
 export const getMe = async (req, res) => {
   try {
+    const userResponse = await buildUserResponse(req.user);
+
     return res.status(200).json({
       success: true,
-      user: {
-        id: req.user._id,
-        name: req.user.name,
-        email: req.user.email,
-        role: req.user.role,
-        startupId: req.user.startupId || null,
-        investorProfile: req.user.investorProfile || null
-      }
+      user: userResponse
     });
   } catch (error) {
     console.error('Get Me Error:', error);

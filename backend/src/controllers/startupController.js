@@ -1,36 +1,32 @@
 import mongoose from 'mongoose';
 import Startup from '../models/Startup.js';
-import User from '../models/User.js';
 
 // @desc    Founder creates startup
 // @route   POST /api/startups
-// @access  FOUNDER
+// @access  founder
 export const createStartup = async (req, res) => {
   try {
     const {
       companyName,
       cin,
-      pitchDescription,
+      authorizedCapital,
+      paidUpCapital,
+      valuationAsk,
       pitchDeckUrl,
-      logoUrl,
-      targetFunding,
-      equityOffered,
-      baseValuation,
-      currentValuation
+      pitchVideoUrl
     } = req.body;
 
-    if (
-      !companyName ||
-      !cin ||
-      !pitchDescription ||
-      targetFunding === undefined ||
-      equityOffered === undefined ||
-      baseValuation === undefined ||
-      currentValuation === undefined
-    ) {
+    if (!companyName || !cin || valuationAsk === undefined || !pitchDeckUrl) {
       return res.status(400).json({
         success: false,
-        message: 'Required startup fields are missing'
+        message: 'Company name, CIN, valuation ask, and pitch deck URL are required'
+      });
+    }
+
+    if (req.user.role !== 'founder') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only founders can create startups'
       });
     }
 
@@ -45,8 +41,10 @@ export const createStartup = async (req, res) => {
       });
     }
 
+    const normalizedCin = cin.toUpperCase().trim();
+
     const existingStartupByCin = await Startup.findOne({
-      cin: cin.trim()
+      cin: normalizedCin
     });
 
     if (existingStartupByCin) {
@@ -58,31 +56,31 @@ export const createStartup = async (req, res) => {
 
     const startup = await Startup.create({
       founderId: req.user._id,
-      companyName,
-      cin: cin.trim(),
-      pitchDescription,
-      pitchDeckUrl: pitchDeckUrl || null,
-      logoUrl: logoUrl || null,
-      targetFunding,
-      raisedFunding: 0,
-      equityOffered,
-      baseValuation,
-      currentValuation,
-      isVerified: false,
-      valuationSource: 'PENDING'
-    });
-
-    await User.findByIdAndUpdate(req.user._id, {
-      startupId: startup._id
+      companyName: companyName.trim(),
+      cin: normalizedCin,
+      mcaStatus: 'Pending',
+      authorizedCapital: authorizedCapital || 0,
+      paidUpCapital: paidUpCapital || 0,
+      valuationAsk,
+      pitchDeckUrl,
+      pitchVideoUrl: pitchVideoUrl || null,
+      isLive: false
     });
 
     return res.status(201).json({
       success: true,
-      message: 'Startup created successfully. Waiting for admin verification.',
+      message: 'Startup created successfully. Waiting for admin approval.',
       startup
     });
   } catch (error) {
     console.error('Create Startup Error:', error);
+
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: 'Startup already exists with this founder or CIN'
+      });
+    }
 
     return res.status(500).json({
       success: false,
@@ -93,12 +91,19 @@ export const createStartup = async (req, res) => {
 
 // @desc    Get logged-in founder startup
 // @route   GET /api/startups/my
-// @access  FOUNDER
+// @access  founder
 export const getMyStartup = async (req, res) => {
   try {
+    if (req.user.role !== 'founder') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only founders can access this route'
+      });
+    }
+
     const startup = await Startup.findOne({
       founderId: req.user._id
-    });
+    }).populate('founderId', 'name email role isVerified');
 
     if (!startup) {
       return res.status(404).json({
@@ -123,22 +128,22 @@ export const getMyStartup = async (req, res) => {
 
 // @desc    Get startups
 // @route   GET /api/startups
-// @access  INVESTOR / ADMIN / FOUNDER
+// @access  investor / founder / admin
 export const getStartups = async (req, res) => {
   try {
-    let filter = {};
+    const filter = {};
 
-    if (req.user.role === 'INVESTOR') {
-      filter.isVerified = true;
+    if (req.user.role === 'investor') {
+      filter.isLive = true;
     }
 
-    if (req.user.role === 'FOUNDER') {
+    if (req.user.role === 'founder') {
       filter.founderId = req.user._id;
     }
 
     const startups = await Startup.find(filter)
-      .populate('founderId', 'name email role')
-      .sort({ createdAt: -1 });
+      .populate('founderId', 'name email role isVerified')
+      .sort({ updatedAt: -1 });
 
     return res.status(200).json({
       success: true,
@@ -157,7 +162,7 @@ export const getStartups = async (req, res) => {
 
 // @desc    Get single startup by ID
 // @route   GET /api/startups/:id
-// @access  Protected
+// @access  protected
 export const getStartupById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -171,7 +176,7 @@ export const getStartupById = async (req, res) => {
 
     const startup = await Startup.findById(id).populate(
       'founderId',
-      'name email role'
+      'name email role isVerified'
     );
 
     if (!startup) {
@@ -181,15 +186,15 @@ export const getStartupById = async (req, res) => {
       });
     }
 
-    if (req.user.role === 'INVESTOR' && !startup.isVerified) {
+    if (req.user.role === 'investor' && !startup.isLive) {
       return res.status(403).json({
         success: false,
-        message: 'You cannot view unverified startups'
+        message: 'You cannot view startups that are not live yet'
       });
     }
 
     if (
-      req.user.role === 'FOUNDER' &&
+      req.user.role === 'founder' &&
       startup.founderId._id.toString() !== req.user._id.toString()
     ) {
       return res.status(403).json({
@@ -214,9 +219,16 @@ export const getStartupById = async (req, res) => {
 
 // @desc    Founder updates own startup
 // @route   PUT /api/startups/my
-// @access  FOUNDER
+// @access  founder
 export const updateMyStartup = async (req, res) => {
   try {
+    if (req.user.role !== 'founder') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only founders can update startups'
+      });
+    }
+
     const startup = await Startup.findOne({
       founderId: req.user._id
     });
@@ -230,29 +242,35 @@ export const updateMyStartup = async (req, res) => {
 
     const allowedUpdates = [
       'companyName',
-      'pitchDescription',
+      'authorizedCapital',
+      'paidUpCapital',
+      'valuationAsk',
       'pitchDeckUrl',
-      'logoUrl',
-      'targetFunding',
-      'equityOffered',
-      'baseValuation',
-      'currentValuation'
+      'pitchVideoUrl'
     ];
 
     allowedUpdates.forEach((field) => {
       if (req.body[field] !== undefined) {
-        startup[field] = req.body[field];
+        if (field === 'companyName') {
+          startup[field] = req.body[field].trim();
+        } else {
+          startup[field] = req.body[field];
+        }
       }
     });
 
-    startup.isVerified = false;
-    startup.valuationSource = 'PENDING';
+    /*
+      Important:
+      If founder changes startup data, make it non-live again.
+      Admin should approve it again before investors see it.
+    */
+    startup.isLive = false;
 
     const updatedStartup = await startup.save();
 
     return res.status(200).json({
       success: true,
-      message: 'Startup updated successfully. Admin verification required again.',
+      message: 'Startup updated successfully. Admin approval required again.',
       startup: updatedStartup
     });
   } catch (error) {
@@ -265,13 +283,20 @@ export const updateMyStartup = async (req, res) => {
   }
 };
 
-// @desc    Admin verifies startup
+// @desc    Admin makes startup live
 // @route   PATCH /api/startups/:id/verify
-// @access  PLATFORM_ADMIN
+// @access  admin
 export const verifyStartup = async (req, res) => {
   try {
     const { id } = req.params;
-    const { valuationSource } = req.body;
+    const { mcaStatus, authorizedCapital, paidUpCapital } = req.body;
+
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only admin can verify startups'
+      });
+    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -289,19 +314,22 @@ export const verifyStartup = async (req, res) => {
       });
     }
 
-    startup.isVerified = true;
+    startup.isLive = true;
+    startup.mcaStatus = mcaStatus || 'Verified';
 
-    if (valuationSource) {
-      startup.valuationSource = valuationSource;
-    } else {
-      startup.valuationSource = 'VALUER_CERTIFICATE';
+    if (authorizedCapital !== undefined) {
+      startup.authorizedCapital = authorizedCapital;
+    }
+
+    if (paidUpCapital !== undefined) {
+      startup.paidUpCapital = paidUpCapital;
     }
 
     const updatedStartup = await startup.save();
 
     return res.status(200).json({
       success: true,
-      message: 'Startup verified successfully',
+      message: 'Startup verified and made live successfully',
       startup: updatedStartup
     });
   } catch (error) {
@@ -314,12 +342,19 @@ export const verifyStartup = async (req, res) => {
   }
 };
 
-// @desc    Admin un-verifies startup
+// @desc    Admin removes startup from live listing
 // @route   PATCH /api/startups/:id/unverify
-// @access  PLATFORM_ADMIN
+// @access  admin
 export const unverifyStartup = async (req, res) => {
   try {
     const { id } = req.params;
+
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only admin can unverify startups'
+      });
+    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -337,14 +372,14 @@ export const unverifyStartup = async (req, res) => {
       });
     }
 
-    startup.isVerified = false;
-    startup.valuationSource = 'PENDING';
+    startup.isLive = false;
+    startup.mcaStatus = 'Pending';
 
     const updatedStartup = await startup.save();
 
     return res.status(200).json({
       success: true,
-      message: 'Startup verification removed',
+      message: 'Startup removed from live listing',
       startup: updatedStartup
     });
   } catch (error) {
@@ -353,6 +388,52 @@ export const unverifyStartup = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Server error while unverifying startup'
+    });
+  }
+};
+
+// @desc    Admin deletes startup
+// @route   DELETE /api/startups/:id
+// @access  admin
+export const deleteStartup = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only admin can delete startups'
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid startup ID'
+      });
+    }
+
+    const startup = await Startup.findById(id);
+
+    if (!startup) {
+      return res.status(404).json({
+        success: false,
+        message: 'Startup not found'
+      });
+    }
+
+    await startup.deleteOne();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Startup deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete Startup Error:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while deleting startup'
     });
   }
 };

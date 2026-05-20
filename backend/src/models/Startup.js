@@ -6,70 +6,63 @@ const startupSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true
+      unique: true
     },
+
     companyName: {
       type: String,
       required: true,
       trim: true
     },
+
     cin: {
       type: String,
       required: true,
       unique: true,
-      index: true
+      uppercase: true,
+      trim: true
     },
-    pitchDescription: {
+
+    mcaStatus: {
       type: String,
-      required: true
+      default: 'Pending'
     },
-    pitchDeckUrl: {
-      type: String,
-      default: null
-    },
-    logoUrl: {
-      type: String,
-      default: null
-    },
-    targetFunding: {
-      type: Number,
-      required: true,
-      min: 0
-    },
-    raisedFunding: {
+
+    authorizedCapital: {
       type: Number,
       default: 0
     },
-    equityOffered: {
+
+    paidUpCapital: {
       type: Number,
-      required: true,
-      min: 0,
-      max: 100
+      default: 0
     },
-    baseValuation: {
-      type: Number,
-      required: true
-    },
-    currentValuation: {
+
+    valuationAsk: {
       type: Number,
       required: true
     },
-    isVerified: {
-      type: Boolean,
-      default: false,
-      index: true
-    },
-    valuationSource: {
+
+    pitchDeckUrl: {
       type: String,
-      enum: ['MCA_API', 'VALUER_CERTIFICATE', 'PENDING'],
-      default: 'PENDING'
+      required: true
+    },
+
+    pitchVideoUrl: {
+      type: String
+    },
+
+    isLive: {
+      type: Boolean,
+      default: false
     }
   },
-  { 
-    timestamps: true 
+  {
+    timestamps: true,
+    versionKey: false
   }
 );
 
-startupSchema.index({ isVerified: -1, currentValuation: -1 });
+startupSchema.index({ isLive: 1, valuationAsk: -1 });
 
 export default mongoose.model('Startup', startupSchema);

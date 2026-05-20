@@ -1,53 +1,17 @@
 import mongoose from 'mongoose';
 
-const meetingSchema = new mongoose.Schema(
-  {
-    startupId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Startup',
-      required: true
-    },
-    investorId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-      index: true
-    },
-    founderId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-      index: true
-    },
-    googleEventId: {
-      type: String,
-      default: null
-    },
-    scheduledStartTime: {
-      type: Date,
-      required: true,
-      index: true
-    },
-    scheduledEndTime: {
-      type: Date,
-      required: true
-    },
-    roomId: {
-      type: String,
-      required: true,
-      unique: true
-    },
-    meetingStatus: {
-      type: String,
-      enum: ['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'],
-      default: 'SCHEDULED'
-    }
-  },
-  { 
-    timestamps: true 
-  }
-);
+const meetingSchema = new mongoose.Schema({
+  roomId: { type: String, required: true, unique: true },
+  hostId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  investorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  startupId: { type: mongoose.Schema.Types.ObjectId, ref: 'Startup', required: true },
+  status: { type: String, enum: ['scheduled', 'active', 'completed', 'cancelled'], default: 'scheduled' },
+  scheduledAt: { type: Date, required: true },
+  endedAt: { type: Date }
+}, { versionKey: false });
 
-meetingSchema.index({ startupId: 1, investorId: 1, scheduledStartTime: 1 }, { unique: true });
+meetingSchema.index({ investorId: 1, scheduledAt: -1 });
+meetingSchema.index({ startupId: 1, scheduledAt: -1 });
+meetingSchema.index({ status: 1 });
 
 export default mongoose.model('Meeting', meetingSchema);
