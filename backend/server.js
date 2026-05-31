@@ -14,7 +14,7 @@ import startupRoutes from './src/routes/startupRoutes.js';
 import walletRoutes from './src/routes/walletRoutes.js';
 import meetingRoutes from './src/routes/meetingRoutes.js';
 import chatRoutes from './src/routes/chatRoutes.js';
-
+import paymentRoutes from './src/routes/paymentRoutes.js';
 import { initSocket } from './src/socket/socket.js';
 
 dotenv.config();
@@ -60,6 +60,8 @@ app.use('/api/v1/wallet', walletRoutes);
 app.use('/api/v1/meetings', meetingRoutes);
 
 app.use('/api/v1/chat', chatRoutes);
+
+app.use('/api/v1/payments', paymentRoutes);
 
 app.get('/', (req, res) => {
   return res.status(200).json({
