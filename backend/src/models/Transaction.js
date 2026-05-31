@@ -80,7 +80,6 @@ const transactionSchema = new mongoose.Schema(
 
 transactionSchema.index({ walletId: 1, timestamp: -1 });
 transactionSchema.index({ userId: 1, timestamp: -1 });
-transactionSchema.index({ razorpayOrderId: 1 }, { sparse: true });
 transactionSchema.index({ status: 1 });
 
 export default mongoose.model('Transaction', transactionSchema);

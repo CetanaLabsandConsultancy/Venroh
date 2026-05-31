@@ -19,8 +19,10 @@ const getOrCreateWallet = async (userId) => {
   return wallet;
 };
 
-const generateReceipt = (userId) => {
-  return `rcpt_${userId.toString()}_${Date.now()}`;
+const generateReceipt = () => {
+  return `rcpt_${Date.now().toString().slice(-10)}_${crypto
+    .randomBytes(4)
+    .toString('hex')}`;
 };
 
 // @desc    Create Razorpay order for wallet deposit
@@ -48,7 +50,7 @@ export const createRazorpayOrder = async (req, res) => {
     const amountInPaise = Math.round(amountInRupees * 100);
 
     const wallet = await getOrCreateWallet(req.user._id);
-    const receipt = generateReceipt(req.user._id);
+    const receipt = generateReceipt();
 
     const razorpayOrder = await razorpay.orders.create({
       amount: amountInPaise,

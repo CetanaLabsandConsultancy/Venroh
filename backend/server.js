@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -17,7 +17,7 @@ import chatRoutes from './src/routes/chatRoutes.js';
 import paymentRoutes from './src/routes/paymentRoutes.js';
 import { initSocket } from './src/socket/socket.js';
 
-dotenv.config();
+// dotenv.config();
 
 const app = express();
 

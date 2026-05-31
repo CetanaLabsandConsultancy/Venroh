@@ -36,11 +36,8 @@ const walletSchema = new mongoose.Schema(
   { versionKey: false }
 );
 
-walletSchema.index({ userId: 1 });
-
-walletSchema.pre('save', function (next) {
+walletSchema.pre('save', function () {
   this.updatedAt = new Date();
-  next();
 });
 
 export default mongoose.model('Wallet', walletSchema);
