@@ -1,26 +1,50 @@
-import RazorpayDepositButton from './components/payments/RazorpayDepositButton';
+import { Navigate, Route, Routes } from 'react-router-dom';
+
+import ProtectedRoute from './components/auth/ProtectedRoute';
+
+import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
+import FounderDashboard from './pages/founder/FounderDashboard';
+import InvestorDashboard from './pages/investor/InvestorDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 function App() {
-  const token = localStorage.getItem('token');
-
-  const user = {
-    name: 'Test User',
-    email: 'test@example.com',
-    phone: '9999999999'
-  };
-
   return (
-    <div style={{ padding: '40px' }}>
-      <h1>Razorpay Test Payment</h1>
+    <Routes>
+      <Route path="/" element={<Navigate to="/login" replace />} />
 
-      <p>Amount: ₹1</p>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
 
-      <RazorpayDepositButton
-        amount={1}
-        token={token}
-        user={user}
+      <Route
+        path="/founder"
+        element={
+          <ProtectedRoute allowedRoles={['founder']}>
+            <FounderDashboard />
+          </ProtectedRoute>
+        }
       />
-    </div>
+
+      <Route
+        path="/investor"
+        element={
+          <ProtectedRoute allowedRoles={['investor']}>
+            <InvestorDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
   );
 }
 
