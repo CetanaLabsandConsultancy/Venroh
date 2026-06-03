@@ -8,6 +8,8 @@ import FounderDashboard from './pages/founder/FounderDashboard';
 import CreateStartupPage from './pages/founder/CreateStartupPage';
 import InvestorDashboard from './pages/investor/InvestorDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import PitchUpdatePage from './pages/founder/PitchUpdatePage';
+
 
 function App() {
   return (
@@ -34,7 +36,15 @@ function App() {
           </ProtectedRoute>
         }
       />
-
+      
+      <Route
+       path="/founder/startups/:id/pitch"
+       element={
+        <ProtectedRoute allowedRoles={['founder']}>
+          <PitchUpdatePage />
+        </ProtectedRoute>
+  }
+/>
       <Route
         path="/investor"
         element={
