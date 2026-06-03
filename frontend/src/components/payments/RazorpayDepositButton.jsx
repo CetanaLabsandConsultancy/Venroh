@@ -26,10 +26,7 @@ const RazorpayDepositButton = ({ amount = 1, token, user }) => {
         return;
       }
 
-      const orderResponse = await createRazorpayOrder({
-        amount,
-        token
-      });
+     const orderResponse = await createRazorpayOrder({ amount });
 
       const orderData = orderResponse.data;
 
@@ -49,9 +46,8 @@ const RazorpayDepositButton = ({ amount = 1, token, user }) => {
               razorpay_signature: response.razorpay_signature
             };
 
-            const verifyResponse = await verifyRazorpayPayment({
-              paymentData: verifyPayload,
-              token
+           const verifyResponse = await verifyRazorpayPayment({
+              paymentData: verifyPayload
             });
 
             if (verifyResponse.success) {
