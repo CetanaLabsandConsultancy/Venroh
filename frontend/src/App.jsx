@@ -19,6 +19,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import ChatPage from './pages/chat/ChatPage';
 import MeetingsPage from './pages/meetings/MeetingsPage';
 import MeetingRoomPage from './pages/meetings/MeetingRoomPage';
+import ChatInboxPage from './pages/chat/ChatInboxPage';
 
 function App() {
   return (
@@ -99,6 +100,15 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+  path="/chat"
+  element={
+    <ProtectedRoute allowedRoles={['founder', 'investor']}>
+      <ChatInboxPage />
+    </ProtectedRoute>
+  }
+/>
 
       <Route
         path="/chat/:conversationId"

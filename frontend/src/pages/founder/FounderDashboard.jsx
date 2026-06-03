@@ -201,7 +201,14 @@ const FounderDashboard = () => {
                    className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
                    Meetings
-                </Link>       
+                </Link> 
+
+                 <Link
+                  to="/chat"
+                  className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                   >
+                  Messages
+                </Link>     
               </div>
             </div>
           </>
