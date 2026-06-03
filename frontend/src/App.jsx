@@ -5,6 +5,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import FounderDashboard from './pages/founder/FounderDashboard';
+import CreateStartupPage from './pages/founder/CreateStartupPage';
 import InvestorDashboard from './pages/investor/InvestorDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
 
@@ -21,6 +22,15 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={['founder']}>
             <FounderDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/founder/create-startup"
+        element={
+          <ProtectedRoute allowedRoles={['founder']}>
+            <CreateStartupPage />
           </ProtectedRoute>
         }
       />

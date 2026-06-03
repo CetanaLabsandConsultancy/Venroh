@@ -5,13 +5,13 @@ export const createStartup = async (data) => {
   return response.data;
 };
 
-export const getStartups = async () => {
-  const response = await api.get('/startups');
+export const getMyStartup = async () => {
+  const response = await api.get('/startups/my');
   return response.data;
 };
 
-export const getMyStartup = async () => {
-  const response = await api.get('/startups/my');
+export const getStartups = async () => {
+  const response = await api.get('/startups');
   return response.data;
 };
 
@@ -37,20 +37,5 @@ export const updateStartupPitch = async (id, data) => {
 
 export const createPitchDeckSignature = async (id, data) => {
   const response = await api.post(`/startups/${id}/pitch-deck/signature`, data);
-  return response.data;
-};
-
-export const verifyStartup = async (id, data = {}) => {
-  const response = await api.patch(`/startups/${id}/verify`, data);
-  return response.data;
-};
-
-export const unverifyStartup = async (id) => {
-  const response = await api.patch(`/startups/${id}/unverify`);
-  return response.data;
-};
-
-export const deleteStartup = async (id) => {
-  const response = await api.delete(`/startups/${id}`);
   return response.data;
 };
