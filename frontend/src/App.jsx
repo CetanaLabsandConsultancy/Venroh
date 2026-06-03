@@ -4,13 +4,21 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
+
 import FounderDashboard from './pages/founder/FounderDashboard';
 import CreateStartupPage from './pages/founder/CreateStartupPage';
-import InvestorDashboard from './pages/investor/InvestorDashboard';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import PitchUpdatePage from './pages/founder/PitchUpdatePage';
 import EditStartupPage from './pages/founder/EditStartupPage';
+import PitchUpdatePage from './pages/founder/PitchUpdatePage';
+import AvailabilityPage from './pages/founder/AvailabilityPage';
 
+import InvestorDashboard from './pages/investor/InvestorDashboard';
+import StartupDetailsPage from './pages/investor/StartupDetailsPage';
+
+import AdminDashboard from './pages/admin/AdminDashboard';
+
+import ChatPage from './pages/chat/ChatPage';
+import MeetingsPage from './pages/meetings/MeetingsPage';
+import MeetingRoomPage from './pages/meetings/MeetingRoomPage';
 
 function App() {
   return (
@@ -37,25 +45,34 @@ function App() {
           </ProtectedRoute>
         }
       />
-      
+
       <Route
-       path="/founder/startups/:id/pitch"
-       element={
-        <ProtectedRoute allowedRoles={['founder']}>
-          <PitchUpdatePage />
-        </ProtectedRoute>
-       }
+        path="/founder/edit-startup"
+        element={
+          <ProtectedRoute allowedRoles={['founder']}>
+            <EditStartupPage />
+          </ProtectedRoute>
+        }
       />
 
       <Route
-       path="/founder/edit-startup"
-       element={
-        <ProtectedRoute allowedRoles={['founder']}>
-          <EditStartupPage />
-        </ProtectedRoute>
-       }
+        path="/founder/startups/:id/pitch"
+        element={
+          <ProtectedRoute allowedRoles={['founder']}>
+            <PitchUpdatePage />
+          </ProtectedRoute>
+        }
       />
-    
+
+      <Route
+        path="/founder/availability"
+        element={
+          <ProtectedRoute allowedRoles={['founder']}>
+            <AvailabilityPage />
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/investor"
         element={
@@ -66,10 +83,64 @@ function App() {
       />
 
       <Route
+        path="/investor/startups/:id"
+        element={
+          <ProtectedRoute allowedRoles={['investor']}>
+            <StartupDetailsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/admin"
         element={
           <ProtectedRoute allowedRoles={['admin']}>
             <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/chat/:conversationId"
+        element={
+          <ProtectedRoute allowedRoles={['founder', 'investor']}>
+            <ChatPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/meetings"
+        element={
+          <ProtectedRoute allowedRoles={['founder', 'investor']}>
+            <MeetingsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/meeting/:roomId"
+        element={
+          <ProtectedRoute allowedRoles={['founder', 'investor']}>
+            <MeetingRoomPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/meet/:roomId"
+        element={
+          <ProtectedRoute allowedRoles={['founder', 'investor']}>
+            <MeetingRoomPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/meetings/:roomId"
+        element={
+          <ProtectedRoute allowedRoles={['founder', 'investor']}>
+            <MeetingRoomPage />
           </ProtectedRoute>
         }
       />

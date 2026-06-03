@@ -15,14 +15,15 @@ import walletRoutes from './src/routes/walletRoutes.js';
 import meetingRoutes from './src/routes/meetingRoutes.js';
 import chatRoutes from './src/routes/chatRoutes.js';
 import paymentRoutes from './src/routes/paymentRoutes.js';
-import { initSocket } from './src/socket/socket.js';
 
-// dotenv.config();
+import { initSocket } from './src/socket/socket.js';
 
 const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const server = http.createServer(app);
 
 connectDB();
 
@@ -83,9 +84,9 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-const server = http.createServer(app);
+const io = initSocket(server);
 
-initSocket(server);
+app.set('io', io);
 
 server.listen(PORT, () => {
   console.log(`Server is ALIVE and routing traffic on port ${PORT}`);

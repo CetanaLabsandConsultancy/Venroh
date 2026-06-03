@@ -120,6 +120,11 @@ const CreateStartupPage = () => {
                 placeholder="Company Identification Number"
                 className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm uppercase outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-100"
               />
+              <p className="mt-1 text-xs text-slate-500">
+                 CIN must be 21 characters for MCA verification. Example:
+                 U72900WB2024PTC123456
+              </p>
+
             </div>
 
             <div>

@@ -188,6 +188,20 @@ const FounderDashboard = () => {
                 >
                   Edit Basic Details
                 </Link>
+
+                  <Link
+                    to="/founder/availability"
+                    className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                   Set Availability
+                </Link>
+
+                <Link
+                   to="/meetings"
+                   className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                   Meetings
+                </Link>       
               </div>
             </div>
           </>
