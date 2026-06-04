@@ -11,8 +11,8 @@ import EditStartupPage from './pages/founder/EditStartupPage';
 import PitchUpdatePage from './pages/founder/PitchUpdatePage';
 import AvailabilityPage from './pages/founder/AvailabilityPage';
 
-import InvestorDashboard from './pages/investor/InvestorDashboard';
-import StartupDetailsPage from './pages/investor/StartupDetailsPage';
+//import InvestorDashboard from './pages/investor/InvestorDashboard';
+//import StartupDetailsPage from './pages/investor/StartupDetailsPage';
 
 import AdminDashboard from './pages/admin/AdminDashboard';
 
@@ -74,23 +74,23 @@ function App() {
         }
       />
 
-      <Route
+      {/* <Route
         path="/investor"
         element={
           <ProtectedRoute allowedRoles={['investor']}>
             <InvestorDashboard />
           </ProtectedRoute>
         }
-      />
+      /> */}
 
-      <Route
+      {/* <Route
         path="/investor/startups/:id"
         element={
           <ProtectedRoute allowedRoles={['investor']}>
             <StartupDetailsPage />
           </ProtectedRoute>
         }
-      />
+      /> */}
 
       <Route
         path="/admin"
