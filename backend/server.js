@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -13,10 +13,9 @@ import startupRoutes from './src/routes/startupRoutes.js';
 import walletRoutes from './src/routes/walletRoutes.js';
 import meetingRoutes from './src/routes/meetingRoutes.js';
 import chatRoutes from './src/routes/chatRoutes.js';
-
+import paymentRoutes from './src/routes/paymentRoutes.js';
 import { initSocket } from './src/socket/socket.js';
 
-dotenv.config();
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -53,6 +52,7 @@ app.use('/api/startups', startupRoutes);
 app.use('/api/v1/wallet', walletRoutes);
 app.use('/api/v1/meetings', meetingRoutes);
 app.use('/api/v1/chat', chatRoutes);
+app.use('/api/v1/payments', paymentRoutes);
 
 app.get('/', (req, res) => {
   return res.status(200).json({
