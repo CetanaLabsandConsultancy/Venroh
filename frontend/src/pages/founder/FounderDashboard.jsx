@@ -36,6 +36,9 @@ const FounderDashboard = () => {
   const [activeConversation, setActiveConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
+  
+  const [selectedFile, setSelectedFile] = useState(null);
+  const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
 
   const token = localStorage.getItem('token');
@@ -113,14 +116,35 @@ const FounderDashboard = () => {
     socket?.emit('join_conversation', { conversationId: conversation._id });
   };
 
-  const sendMessage = () => {
-    if (!chatInput.trim() || !activeConversation) return;
+  const sendMessage = async () => {
+    if ((!chatInput.trim() && !selectedFile) || !activeConversation) return;
     
-    socket?.emit('send_message', {
-      conversationId: activeConversation._id,
-      text: chatInput
-    });
-    setChatInput('');
+    if (!selectedFile) {
+      socket?.emit('send_message', {
+        conversationId: activeConversation._id,
+        text: chatInput
+      });
+      setChatInput('');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('conversationId', activeConversation._id);
+    if (chatInput.trim()) formData.append('text', chatInput);
+    formData.append('attachment', selectedFile); 
+
+    try {
+      await fetch(`${SERVER_URL}/api/v1/chat/send-message`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      
+      setChatInput('');
+      setSelectedFile(null);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const formatMoney = (amount) => {
@@ -135,14 +159,28 @@ const FounderDashboard = () => {
     return conv.participants?.find(p => p._id !== user.id) || { name: 'Investor' };
   };
 
-  const handleViewPitch = async (startupId) => {
+ const handleViewPitch = async (startupId) => {
     try {
-      const response = await axios.get(`/api/startups/${startupId}/pitch-url`, {
+      // Added SERVER_URL to make sure it hits the backend correctly
+      const response = await axios.get(`${SERVER_URL}/api/startups/${startupId}/pitch-url`, {
+        headers: { 'Authorization': `Bearer ${token}` }, 
         withCredentials: true
       });
-      window.open(response.data.url, '_blank');
+      
+      console.log("Backend Response for Pitch:", response.data);
+
+      // Check both common variable names the backend might send
+      const pitchUrl = response.data.url || response.data.pitchDeckUrl; 
+      
+      if (pitchUrl) {
+        window.open(pitchUrl, '_blank');
+      } else {
+        alert("Could not find the pitch deck URL in the server response.");
+      }
+
     } catch (err) {
       console.error('Failed to load secure pitch deck', err);
+      alert("Error connecting to the server to get the pitch deck.");
     }
   };
 
@@ -409,7 +447,7 @@ const FounderDashboard = () => {
                     className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                   >
                     Messages
-                  </Link>     
+                  </Link>    
                 </div>
               </div>
             </>
@@ -457,27 +495,47 @@ const FounderDashboard = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="p-4 bg-white border-t border-slate-100 flex items-center gap-3 flex-none">
-            <button 
-              className="p-2.5 text-slate-400 bg-slate-50 rounded-xl hover:bg-slate-100 hover:text-slate-600 transition"
-              title="Upload File"
-            >
-              <Paperclip size={18} />
-            </button>
-            <input 
-              type="text" 
-              placeholder="Type a message..." 
-              className="flex-1 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-slate-900 focus:bg-white transition"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-            />
-            <button 
-              onClick={sendMessage}
-              className="p-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl transition shadow-md"
-            >
-              <Send size={18} />
-            </button>
+          <div className="p-4 bg-white border-t border-slate-100 flex-none">
+            {selectedFile && (
+              <div className="flex items-center gap-2 mb-2 text-xs text-slate-600 bg-slate-100 p-2 rounded-lg w-fit">
+                <Paperclip size={12} />
+                <span>{selectedFile.name}</span>
+                <button onClick={() => setSelectedFile(null)} className="text-red-500 hover:text-red-700 ml-2">
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+            
+            <div className="flex items-center gap-3">
+              <input 
+                type="file" 
+                className="hidden" 
+                ref={fileInputRef} 
+                onChange={(e) => setSelectedFile(e.target.files[0])}
+              />
+              
+              <button 
+                onClick={() => fileInputRef.current.click()}
+                className="p-2.5 text-slate-400 bg-slate-50 rounded-xl hover:bg-slate-100 hover:text-slate-600 transition"
+              >
+                <Paperclip size={18} />
+              </button>
+              
+              <input 
+                type="text" 
+                placeholder="Type a message..." 
+                className="flex-1 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-slate-900 focus:bg-white transition"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+              />
+              <button 
+                onClick={sendMessage}
+                className="p-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl transition shadow-md"
+              >
+                <Send size={18} />
+              </button>
+            </div>
           </div>
         </div>
       )}
