@@ -1,3 +1,4 @@
+
 import crypto from 'crypto';
 import mongoose from 'mongoose';
 import axios from 'axios';
@@ -955,8 +956,7 @@ export const getPitchDeckUrl = async (req, res) => {
 
     const signedUrl = cloudinary.url(startup.pitchDeck.publicId, {
       resource_type: 'raw',
-      type: 'authenticated',
-      sign_url: true,
+      type: 'upload',
       secure: true
     });
 
