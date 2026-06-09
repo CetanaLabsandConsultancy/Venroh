@@ -18,6 +18,8 @@ import {
   verifyStartup
 } from '../../services/startupService';
 
+const SERVER_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
 
@@ -26,6 +28,8 @@ const AdminDashboard = () => {
   const [actionLoading, setActionLoading] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const token = localStorage.getItem('token');
 
   const fetchStartups = async () => {
     try {
@@ -116,11 +120,23 @@ const AdminDashboard = () => {
     try {
       setActionLoading(`deck-${startupId}`);
       setError('');
-      const response = await axios.get(`/api/startups/${startupId}/pitch-url`, {
+      
+      const response = await axios.get(`${SERVER_URL}/api/startups/${startupId}/pitch-url`, {
+        headers: { 
+          'Authorization': `Bearer ${token}` 
+        },
         withCredentials: true
       });
-      window.open(response.data.url, '_blank');
+      
+      const pitchUrl = response.data?.url || response.data?.pitchDeckUrl; 
+      
+      if (pitchUrl) {
+        window.open(pitchUrl, '_blank');
+      } else {
+        setError("Could not find the pitch deck URL in the server response.");
+      }
     } catch (err) {
+      console.error("Pitch fetch error:", err);
       setError(err.response?.data?.message || 'Failed to load secure pitch deck');
     } finally {
       setActionLoading('');
