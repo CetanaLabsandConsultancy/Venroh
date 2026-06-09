@@ -16,7 +16,8 @@ import {
   Building2,
   RefreshCw,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  LogOut
 } from 'lucide-react';
 
 const SERVER_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -169,8 +170,34 @@ export default function InvestorDashboard() {
   const token = localStorage.getItem('token');
   const loggedInUserId = getLoggedInUserId(token);
 
+  const handleLogout = async () => {
+  try {
+    await fetch(`${SERVER_URL}/api/auth/logout`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+  } finally {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('role');
+
+    if (socket) {
+      socket.disconnect();
+    }
+
+    window.location.href = '/login';
+  }
+};
+
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      window.location.href = '/login';
+      return;
+    }
 
     socket = io(SERVER_URL, {
   auth: { token }
@@ -829,8 +856,18 @@ const verifyRes = await fetch(`${SERVER_URL}/api/v1/payments/verify`, {
               <CreditCard size={16} />
               Wallet
             </button>
+
+            <button
+  onClick={handleLogout}
+  className="px-5 py-2.5 rounded-lg text-sm font-semibold transition flex items-center gap-2 text-red-300 hover:text-white hover:bg-red-500/20"
+>
+  <LogOut size={16} />
+  Logout
+</button>
           </div>
         </div>
+
+
 
         {activeView === 'wallet' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
