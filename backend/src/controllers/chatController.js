@@ -490,8 +490,10 @@ export const createCloudinaryChatUploadSignature = async (req, res) => {
     const resourceType = getResourceTypeFromMimeType(mimeType);
 
     const paramsToSign = {
+      access_mode: 'public',
       public_id: publicId,
-      timestamp
+      timestamp,
+      type: 'upload'
     };
 
     const signature = cloudinary.utils.api_sign_request(
