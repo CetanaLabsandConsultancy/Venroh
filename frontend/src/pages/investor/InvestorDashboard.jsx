@@ -163,6 +163,9 @@ export default function InvestorDashboard() {
   const [walletBalance, setWalletBalance] = useState(0);
   const [paymentStatus, setPaymentStatus] = useState('');
 
+  const fileInputRef = useRef(null);
+  const [fileUploading, setFileUploading] = useState(false);
+
   const token = localStorage.getItem('token');
   const loggedInUserId = getLoggedInUserId(token);
 
@@ -170,9 +173,16 @@ export default function InvestorDashboard() {
     if (!token) return;
 
     socket = io(SERVER_URL, {
-      auth: { token },
-      transports: ['websocket']
-    });
+  auth: { token }
+});
+
+socket.on('connect', () => {
+  console.log('Socket connected:', socket.id);
+});
+
+socket.on('connect_error', (err) => {
+  console.error('Socket connection error:', err.message);
+});
 
     socket.on('new_message', (msg) => {
       setMessages((prev) => {
@@ -605,6 +615,90 @@ const verifyRes = await fetch(`${SERVER_URL}/api/v1/payments/verify`, {
     if (activeView === 'chats') return 'Manage your founder-investor conversations in one secure inbox.';
     return 'Add money to your wallet using Razorpay test mode and track your payment history.';
   };
+
+  const handleChatFileSelected = async (e) => {
+  const file = e.target.files?.[0];
+
+  if (!file || !activeConversation) return;
+
+  try {
+    setFileUploading(true);
+
+    const signatureRes = await fetch(
+      `${SERVER_URL}/api/v1/chat/conversations/${activeConversation._id}/cloudinary-signature`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType: file.type || 'application/octet-stream'
+        })
+      }
+    );
+
+    const signatureData = await signatureRes.json();
+
+    if (!signatureRes.ok || !signatureData.success) {
+      throw new Error(signatureData.message || 'Failed to create upload signature.');
+    }
+
+    const upload = signatureData.upload;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('api_key', upload.apiKey);
+    formData.append('timestamp', upload.timestamp);
+    formData.append('signature', upload.signature);
+    formData.append('public_id', upload.publicId);
+
+    const cloudinaryRes = await fetch(upload.uploadUrl, {
+      method: 'POST',
+      body: formData
+    });
+
+    const cloudinaryData = await cloudinaryRes.json();
+
+    if (!cloudinaryRes.ok) {
+      throw new Error(
+        cloudinaryData.error?.message || 'Cloudinary upload failed.'
+      );
+    }
+
+    const saveRes = await fetch(
+      `${SERVER_URL}/api/v1/chat/conversations/${activeConversation._id}/cloudinary-file-message`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          text: '',
+          attachment: cloudinaryData,
+          fileName: file.name,
+          mimeType: file.type || 'application/octet-stream'
+        })
+      }
+    );
+
+    const saveData = await saveRes.json();
+
+    if (!saveRes.ok || !saveData.success) {
+      throw new Error(saveData.message || 'Failed to save file message.');
+    }
+
+    e.target.value = '';
+  } catch (error) {
+    console.error('Chat file upload error:', error);
+    alert(error.message || 'File upload failed.');
+  } finally {
+    setFileUploading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans flex">
@@ -1357,13 +1451,21 @@ const verifyRes = await fetch(`${SERVER_URL}/api/v1/payments/verify`, {
           </div>
 
           <div className="p-4 bg-white border-t border-gray-100 flex items-center gap-3">
-            <button
-              className="p-2.5 text-gray-400 bg-gray-50 rounded-xl hover:bg-gray-100 hover:text-gray-600 transition"
-              title="Upload File"
-              onClick={() => alert('Connects to createCloudinaryChatUploadSignature endpoint')}
-            >
-              <Paperclip size={18} />
-            </button>
+            <input
+  ref={fileInputRef}
+  type="file"
+  className="hidden"
+  onChange={handleChatFileSelected}
+/>
+
+<button
+  className="p-2.5 text-gray-400 bg-gray-50 rounded-xl hover:bg-gray-100 hover:text-gray-600 transition disabled:opacity-50"
+  title="Upload File"
+  disabled={fileUploading}
+  onClick={() => fileInputRef.current?.click()}
+>
+  <Paperclip size={18} />
+</button>
 
             <input
               type="text"

@@ -49,13 +49,12 @@ const normalizeSocketAttachments = (attachments = []) => {
 
 export const initSocket = (server) => {
   const io = new Server(server, {
-    cors: {
-      origin: getAllowedOrigins(),
-      methods: ['GET', 'POST'],
-      credentials: true
-    },
-    transports: ['websocket']
-  });
+  cors: {
+    origin: getAllowedOrigins(),
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
 
   ioInstance = io;
 
