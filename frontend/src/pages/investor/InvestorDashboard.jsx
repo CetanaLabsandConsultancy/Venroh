@@ -171,27 +171,31 @@ export default function InvestorDashboard() {
   const loggedInUserId = getLoggedInUserId(token);
 
   const handleLogout = async () => {
-  try {
-    await fetch(`${SERVER_URL}/api/auth/logout`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`
+    try {
+      await fetch(`${SERVER_URL}/api/auth/logout`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('role');
+
+      if (socket) {
+        socket.disconnect();
       }
-    });
-  } catch (error) {
-    console.error('Logout error:', error);
-  } finally {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('role');
 
-    if (socket) {
-      socket.disconnect();
+      window.location.href = '/login';
     }
+  };
 
-    window.location.href = '/login';
-  }
-};
+  const closeChat = () => {
+    setChatOpen(false);
+  };
 
   useEffect(() => {
     if (!token) {
@@ -200,16 +204,16 @@ export default function InvestorDashboard() {
     }
 
     socket = io(SERVER_URL, {
-  auth: { token }
-});
+      auth: { token }
+    });
 
-socket.on('connect', () => {
-  console.log('Socket connected:', socket.id);
-});
+    socket.on('connect', () => {
+      console.log('Socket connected:', socket.id);
+    });
 
-socket.on('connect_error', (err) => {
-  console.error('Socket connection error:', err.message);
-});
+    socket.on('connect_error', (err) => {
+      console.error('Socket connection error:', err.message);
+    });
 
     socket.on('new_message', (msg) => {
       setMessages((prev) => {
@@ -248,6 +252,7 @@ socket.on('connect_error', (err) => {
               }
             };
           }
+
           return prevSelected;
         });
       }
@@ -258,7 +263,9 @@ socket.on('connect_error', (err) => {
     fetchConversations();
     fetchPaymentTransactions();
 
-    return () => socket.disconnect();
+    return () => {
+      socket?.disconnect();
+    };
   }, [token]);
 
   const scrollToBottom = () => {
@@ -270,11 +277,16 @@ socket.on('connect_error', (err) => {
   const fetchStartups = async () => {
     try {
       setLoading(true);
+
       const res = await fetch(`${SERVER_URL}/api/startups`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
       const data = await res.json();
-      if (data.success) setStartups(data.startups);
+
+      if (data.success) {
+        setStartups(data.startups);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -287,8 +299,12 @@ socket.on('connect_error', (err) => {
       const res = await fetch(`${SERVER_URL}/api/v1/meetings/upcoming`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
       const data = await res.json();
-      if (data.success) setUpcomingMeetings(data.meetings);
+
+      if (data.success) {
+        setUpcomingMeetings(data.meetings);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -299,8 +315,12 @@ socket.on('connect_error', (err) => {
       const res = await fetch(`${SERVER_URL}/api/v1/chat/conversations`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
       const data = await res.json();
-      if (data.success) setConversations(data.conversations);
+
+      if (data.success) {
+        setConversations(data.conversations);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -356,6 +376,7 @@ socket.on('connect_error', (err) => {
     const nextPage = Math.min(Math.max(1, Number(page) || 1), totalPages);
 
     if (nextPage === transactionPage) return;
+
     fetchPaymentTransactions(nextPage);
   };
 
@@ -425,22 +446,22 @@ socket.on('connect_error', (err) => {
             setPaymentLoading(true);
 
             const verifyBody = {
-  transactionId: order.transactionId,
-  razorpay_order_id: response.razorpay_order_id,
-  razorpay_payment_id: response.razorpay_payment_id,
-  razorpay_signature: response.razorpay_signature
-};
+              transactionId: order.transactionId,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            };
 
-console.log('VERIFY PAYMENT BODY:', verifyBody);
+            console.log('VERIFY PAYMENT BODY:', verifyBody);
 
-const verifyRes = await fetch(`${SERVER_URL}/api/v1/payments/verify`, {
-  method: 'POST',
-  headers: {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify(verifyBody)
-});
+            const verifyRes = await fetch(`${SERVER_URL}/api/v1/payments/verify`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(verifyBody)
+            });
 
             const verifyData = await verifyRes.json();
 
@@ -533,7 +554,10 @@ const verifyRes = await fetch(`${SERVER_URL}/api/v1/payments/verify`, {
 
       if (data.success) {
         setActiveConversation(data.conversation);
-        socket?.emit('join_conversation', { conversationId: data.conversation._id });
+
+        socket?.emit('join_conversation', {
+          conversationId: data.conversation._id
+        });
 
         const msgRes = await fetch(
           `${SERVER_URL}/api/v1/chat/conversations/${data.conversation._id}/messages`,
@@ -638,94 +662,100 @@ const verifyRes = await fetch(`${SERVER_URL}/api/v1/payments/verify`, {
   };
 
   const getHeaderSubtitle = () => {
-    if (activeView === 'discovery') return 'Discover, evaluate, and connect with verified startups.';
-    if (activeView === 'chats') return 'Manage your founder-investor conversations in one secure inbox.';
+    if (activeView === 'discovery') {
+      return 'Discover, evaluate, and connect with verified startups.';
+    }
+
+    if (activeView === 'chats') {
+      return 'Manage your founder-investor conversations in one secure inbox.';
+    }
+
     return 'Add money to your wallet using Razorpay test mode and track your payment history.';
   };
 
   const handleChatFileSelected = async (e) => {
-  const file = e.target.files?.[0];
+    const file = e.target.files?.[0];
 
-  if (!file || !activeConversation) return;
+    if (!file || !activeConversation) return;
 
-  try {
-    setFileUploading(true);
+    try {
+      setFileUploading(true);
 
-    const signatureRes = await fetch(
-      `${SERVER_URL}/api/v1/chat/conversations/${activeConversation._id}/cloudinary-signature`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          fileName: file.name,
-          fileSize: file.size,
-          mimeType: file.type || 'application/octet-stream'
-        })
-      }
-    );
-
-    const signatureData = await signatureRes.json();
-
-    if (!signatureRes.ok || !signatureData.success) {
-      throw new Error(signatureData.message || 'Failed to create upload signature.');
-    }
-
-    const upload = signatureData.upload;
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('api_key', upload.apiKey);
-    formData.append('timestamp', upload.timestamp);
-    formData.append('signature', upload.signature);
-    formData.append('public_id', upload.publicId);
-
-    const cloudinaryRes = await fetch(upload.uploadUrl, {
-      method: 'POST',
-      body: formData
-    });
-
-    const cloudinaryData = await cloudinaryRes.json();
-
-    if (!cloudinaryRes.ok) {
-      throw new Error(
-        cloudinaryData.error?.message || 'Cloudinary upload failed.'
+      const signatureRes = await fetch(
+        `${SERVER_URL}/api/v1/chat/conversations/${activeConversation._id}/cloudinary-signature`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            fileName: file.name,
+            fileSize: file.size,
+            mimeType: file.type || 'application/octet-stream'
+          })
+        }
       );
-    }
 
-    const saveRes = await fetch(
-      `${SERVER_URL}/api/v1/chat/conversations/${activeConversation._id}/cloudinary-file-message`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          text: '',
-          attachment: cloudinaryData,
-          fileName: file.name,
-          mimeType: file.type || 'application/octet-stream'
-        })
+      const signatureData = await signatureRes.json();
+
+      if (!signatureRes.ok || !signatureData.success) {
+        throw new Error(signatureData.message || 'Failed to create upload signature.');
       }
-    );
 
-    const saveData = await saveRes.json();
+      const upload = signatureData.upload;
 
-    if (!saveRes.ok || !saveData.success) {
-      throw new Error(saveData.message || 'Failed to save file message.');
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', upload.apiKey);
+      formData.append('timestamp', upload.timestamp);
+      formData.append('signature', upload.signature);
+      formData.append('public_id', upload.publicId);
+
+      const cloudinaryRes = await fetch(upload.uploadUrl, {
+        method: 'POST',
+        body: formData
+      });
+
+      const cloudinaryData = await cloudinaryRes.json();
+
+      if (!cloudinaryRes.ok) {
+        throw new Error(
+          cloudinaryData.error?.message || 'Cloudinary upload failed.'
+        );
+      }
+
+      const saveRes = await fetch(
+        `${SERVER_URL}/api/v1/chat/conversations/${activeConversation._id}/cloudinary-file-message`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            text: '',
+            attachment: cloudinaryData,
+            fileName: file.name,
+            mimeType: file.type || 'application/octet-stream'
+          })
+        }
+      );
+
+      const saveData = await saveRes.json();
+
+      if (!saveRes.ok || !saveData.success) {
+        throw new Error(saveData.message || 'Failed to save file message.');
+      }
+
+      e.target.value = '';
+    } catch (error) {
+      console.error('Chat file upload error:', error);
+      alert(error.message || 'File upload failed.');
+    } finally {
+      setFileUploading(false);
     }
-
-    e.target.value = '';
-  } catch (error) {
-    console.error('Chat file upload error:', error);
-    alert(error.message || 'File upload failed.');
-  } finally {
-    setFileUploading(false);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans flex">
@@ -858,16 +888,14 @@ const verifyRes = await fetch(`${SERVER_URL}/api/v1/payments/verify`, {
             </button>
 
             <button
-  onClick={handleLogout}
-  className="px-5 py-2.5 rounded-lg text-sm font-semibold transition flex items-center gap-2 text-red-300 hover:text-white hover:bg-red-500/20"
->
-  <LogOut size={16} />
-  Logout
-</button>
+              onClick={handleLogout}
+              className="px-5 py-2.5 rounded-lg text-sm font-semibold transition flex items-center gap-2 text-red-300 hover:text-white hover:bg-red-500/20"
+            >
+              <LogOut size={16} />
+              Logout
+            </button>
           </div>
         </div>
-
-
 
         {activeView === 'wallet' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -954,6 +982,7 @@ const verifyRes = await fetch(`${SERVER_URL}/api/v1/payments/verify`, {
                     size={15}
                     className={transactionsLoading ? 'animate-spin' : ''}
                   />
+
                   {transactionsLoading ? 'Loading...' : 'Refresh'}
                 </button>
               </div>
@@ -965,6 +994,7 @@ const verifyRes = await fetch(`${SERVER_URL}/api/v1/payments/verify`, {
                       size={34}
                       className="mx-auto text-gray-300 mb-3 animate-spin"
                     />
+
                     <p className="text-sm text-gray-500 font-medium">
                       Loading payment transactions...
                     </p>
@@ -972,6 +1002,7 @@ const verifyRes = await fetch(`${SERVER_URL}/api/v1/payments/verify`, {
                 ) : transactions.length === 0 ? (
                   <div className="p-10 text-center">
                     <CreditCard size={36} className="mx-auto text-gray-300 mb-3" />
+
                     <p className="text-sm text-gray-500 font-medium">
                       No payment transactions yet.
                     </p>
@@ -1419,8 +1450,8 @@ const verifyRes = await fetch(`${SERVER_URL}/api/v1/payments/verify`, {
       )}
 
       {chatOpen && activeConversation && (
-        <div className="fixed bottom-6 right-6 w-[400px] bg-white border border-gray-200 rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden animate-in slide-in-from-bottom-8">
-          <div className="bg-[#0B0F19] p-4 flex justify-between items-center">
+        <div className="fixed right-4 bottom-4 sm:right-6 sm:bottom-6 w-[calc(100vw-2rem)] sm:w-[400px] h-[min(620px,calc(100vh-2rem))] bg-white border border-gray-200 rounded-2xl shadow-2xl flex flex-col z-[9999] overflow-hidden animate-in slide-in-from-bottom-8">
+          <div className="bg-[#0B0F19] p-4 flex justify-between items-center shrink-0">
             <div>
               <h3 className="font-bold text-white">
                 {activeConversation.startupId?.companyName || 'Founder'}
@@ -1433,24 +1464,26 @@ const verifyRes = await fetch(`${SERVER_URL}/api/v1/payments/verify`, {
             </div>
 
             <button
-              onClick={() => setChatOpen(false)}
+              type="button"
+              onClick={closeChat}
               className="text-gray-400 hover:text-white bg-white/10 p-1.5 rounded-lg transition"
+              title="Close chat"
             >
               <X size={18} />
             </button>
           </div>
 
-          <div className="flex-1 h-96 overflow-y-auto p-5 space-y-4 bg-gray-50">
+          <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-4 bg-gray-50">
             {messages.map((msg, idx) => {
               const isMine = msg.senderId?._id === loggedInUserId;
 
               return (
                 <div
-                  key={idx}
+                  key={msg._id || idx}
                   className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
                 >
                   <div
-                    className={`max-w-[85%] p-3.5 rounded-2xl text-sm shadow-sm ${
+                    className={`max-w-[85%] p-3.5 rounded-2xl text-sm shadow-sm break-words whitespace-pre-wrap ${
                       isMine
                         ? 'bg-blue-600 text-white rounded-tr-none'
                         : 'bg-white border border-gray-100 text-gray-800 rounded-tl-none'
@@ -1475,10 +1508,12 @@ const verifyRes = await fetch(`${SERVER_URL}/api/v1/payments/verify`, {
                   </div>
 
                   <span className="text-[10px] font-medium text-gray-400 mt-1.5">
-                    {new Date(msg.createdAt).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                    {msg.createdAt
+                      ? new Date(msg.createdAt).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })
+                      : ''}
                   </span>
                 </div>
               );
@@ -1487,33 +1522,35 @@ const verifyRes = await fetch(`${SERVER_URL}/api/v1/payments/verify`, {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="p-4 bg-white border-t border-gray-100 flex items-center gap-3">
+          <div className="p-4 bg-white border-t border-gray-100 flex items-center gap-3 shrink-0">
             <input
-  ref={fileInputRef}
-  type="file"
-  className="hidden"
-  onChange={handleChatFileSelected}
-/>
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              onChange={handleChatFileSelected}
+            />
 
-<button
-  className="p-2.5 text-gray-400 bg-gray-50 rounded-xl hover:bg-gray-100 hover:text-gray-600 transition disabled:opacity-50"
-  title="Upload File"
-  disabled={fileUploading}
-  onClick={() => fileInputRef.current?.click()}
->
-  <Paperclip size={18} />
-</button>
+            <button
+              type="button"
+              className="p-2.5 text-gray-400 bg-gray-50 rounded-xl hover:bg-gray-100 hover:text-gray-600 transition disabled:opacity-50"
+              title="Upload File"
+              disabled={fileUploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Paperclip size={18} />
+            </button>
 
             <input
               type="text"
               placeholder="Type a message..."
-              className="flex-1 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-blue-500 focus:bg-white transition"
+              className="flex-1 min-w-0 bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-blue-500 focus:bg-white transition"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
             />
 
             <button
+              type="button"
               onClick={sendMessage}
               className="p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition shadow-md shadow-blue-600/20"
             >
