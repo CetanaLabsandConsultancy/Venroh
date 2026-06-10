@@ -673,6 +673,18 @@ export default function InvestorDashboard() {
     return 'Add money to your wallet using Razorpay test mode and track your payment history.';
   };
 
+  const readJsonResponse = async (res, fallbackMessage) => {
+    const contentType = res.headers.get('content-type') || '';
+
+    if (!contentType.includes('application/json')) {
+      const responseText = await res.text();
+      console.error('Non-JSON response:', responseText);
+      throw new Error(fallbackMessage);
+    }
+
+    return res.json();
+  };
+
   const handleChatFileSelected = async (e) => {
     const file = e.target.files?.[0];
 
@@ -697,7 +709,10 @@ export default function InvestorDashboard() {
         }
       );
 
-      const signatureData = await signatureRes.json();
+      const signatureData = await readJsonResponse(
+        signatureRes,
+        'Backend signature route returned non-JSON response.'
+      );
 
       if (!signatureRes.ok || !signatureData.success) {
         throw new Error(signatureData.message || 'Failed to create upload signature.');
@@ -705,25 +720,30 @@ export default function InvestorDashboard() {
 
       const upload = signatureData.upload;
 
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('api_key', upload.apiKey);
-      formData.append('timestamp', upload.timestamp);
-      formData.append('signature', upload.signature);
-      formData.append('public_id', upload.publicId);
+const formData = new FormData();
 
-      const cloudinaryRes = await fetch(upload.uploadUrl, {
-        method: 'POST',
-        body: formData
-      });
+formData.append('file', file);
+formData.append('api_key', upload.apiKey);
+formData.append('timestamp', String(upload.timestamp));
+formData.append('signature', upload.signature);
+formData.append('public_id', upload.publicId);
 
-      const cloudinaryData = await cloudinaryRes.json();
+// Must match backend paramsToSign
+formData.append('access_mode', 'public');
+formData.append('type', 'upload');
 
-      if (!cloudinaryRes.ok) {
-        throw new Error(
-          cloudinaryData.error?.message || 'Cloudinary upload failed.'
-        );
-      }
+const cloudinaryRes = await fetch(upload.uploadUrl, {
+  method: 'POST',
+  body: formData
+});
+
+const cloudinaryData = await cloudinaryRes.json();
+
+if (!cloudinaryRes.ok) {
+  throw new Error(
+    cloudinaryData.error?.message || 'Cloudinary upload failed.'
+  );
+}
 
       const saveRes = await fetch(
         `${SERVER_URL}/api/v1/chat/conversations/${activeConversation._id}/cloudinary-file-message`,
@@ -742,7 +762,10 @@ export default function InvestorDashboard() {
         }
       );
 
-      const saveData = await saveRes.json();
+      const saveData = await readJsonResponse(
+        saveRes,
+        'Backend save file route returned non-JSON response.'
+      );
 
       if (!saveRes.ok || !saveData.success) {
         throw new Error(saveData.message || 'Failed to save file message.');
