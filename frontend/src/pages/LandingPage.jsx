@@ -1,15 +1,23 @@
 import {
   ArrowRight,
   BarChart3,
+  BrainCircuit,
+  CalendarDays,
   Check,
+  CheckCircle2,
   ChevronRight,
   CircleDollarSign,
+  FileCheck2,
   Layers3,
   LockKeyhole,
   Menu,
   MessageSquare,
+  Search,
   Sparkles,
+  Target,
   Users,
+  Video,
+  WalletCards,
   X
 } from 'lucide-react';
 import { useState } from 'react';
@@ -36,6 +44,68 @@ const highlights = [
   }
 ];
 
+const platformFeatures = [
+  {
+    icon: Search,
+    title: 'Startup discovery',
+    description:
+      'Explore relevant startup profiles, business details, traction, and funding context in one focused view.'
+  },
+  {
+    icon: FileCheck2,
+    title: 'Pitch-ready profiles',
+    description:
+      'Help founders present their company story, valuation ask, pitch deck, and vision with clarity.'
+  },
+  {
+    icon: MessageSquare,
+    title: 'Direct conversations',
+    description:
+      'Move from a profile view to a meaningful conversation without losing the context behind the connection.'
+  },
+  {
+    icon: CalendarDays,
+    title: 'Meetings that move',
+    description:
+      'Coordinate availability and take promising conversations into structured founder-investor meetings.'
+  },
+  {
+    icon: BrainCircuit,
+    title: 'Sharper decisions',
+    description:
+      'Use pitch updates and intelligent summaries to spend less time sorting information and more time acting on it.'
+  },
+  {
+    icon: WalletCards,
+    title: 'Ready for investment',
+    description:
+      'Keep wallet and transaction workflows close to the relationship, so the next step stays simple.'
+  }
+];
+
+const roleBenefits = [
+  {
+    eyebrow: 'For founders',
+    title: 'Turn your story into a signal.',
+    description:
+      'Show what you are building, why it matters, and where you are going next. Venroh gives your startup a professional home for discovery and investor conversations.',
+    icon: RocketIcon,
+    points: ['Create a complete startup profile', 'Share pitch updates and traction', 'Connect with relevant investors']
+  },
+  {
+    eyebrow: 'For investors',
+    title: 'Find potential worth your time.',
+    description:
+      'Discover startups with the context you need to make an informed first move, then take the best conversations into meetings and decisions.',
+    icon: Target,
+    points: ['Browse startup opportunities', 'Review pitch and company details', 'Chat, meet, and track next steps']
+  }
+];
+
+function RocketIcon({ size = 22 }) {
+  return <span className="text-indigo-300"><ArrowRight size={size} /></span>;
+}
+
 const LandingPage = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -58,6 +128,9 @@ const LandingPage = () => {
             </a>
             <a href="#how-it-works" className="transition hover:text-white">
               How it works
+            </a>
+            <a href="#features" className="transition hover:text-white">
+              Features
             </a>
             <a href="#contact" className="transition hover:text-white">
               Contact
@@ -97,6 +170,9 @@ const LandingPage = () => {
               </a>
               <a href="#how-it-works" onClick={closeMenu}>
                 How it works
+              </a>
+              <a href="#features" onClick={closeMenu}>
+                Features
               </a>
               <a href="#contact" onClick={closeMenu}>
                 Contact
@@ -232,6 +308,26 @@ const LandingPage = () => {
           </div>
         </section>
 
+        <section className="border-y border-white/10 bg-[#0c1020]">
+          <div className="mx-auto grid max-w-7xl gap-6 px-6 py-7 sm:grid-cols-3 lg:px-8">
+            {[
+              ['One workspace', 'Profiles, pitches, chat, and meetings'],
+              ['Two perspectives', 'A clearer path for founders and investors'],
+              ['One next step', 'From discovery to a real conversation']
+            ].map(([label, detail], index) => (
+              <div key={label} className={`flex items-start gap-4 ${index > 0 ? 'sm:border-l sm:border-white/10 sm:pl-6' : ''}`}>
+                <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-400/10 text-xs font-semibold text-indigo-300">
+                  0{index + 1}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">{label}</p>
+                  <p className="mt-1 text-sm text-slate-500">{detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section id="why-venroh" className="border-y border-white/10 bg-white/[0.025]">
           <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-24">
             <div className="max-w-2xl">
@@ -253,6 +349,72 @@ const LandingPage = () => {
                   </div>
                   <h3 className="text-lg font-semibold">{title}</h3>
                   <p className="mt-3 text-sm leading-6 text-slate-400">{description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="features" className="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-28">
+          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+            <div className="max-w-2xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-300">Built into the journey</p>
+              <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+                Everything you need to make the right introduction matter.
+              </h2>
+            </div>
+            <p className="max-w-sm text-sm leading-6 text-slate-400">
+              Venroh brings the parts of startup discovery that usually live in separate tools into one calm, connected experience.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {platformFeatures.map(({ icon: Icon, title, description }) => (
+              <div key={title} className="group rounded-3xl border border-white/10 bg-[#0d1222] p-6 transition hover:-translate-y-1 hover:border-indigo-300/30 hover:bg-[#11172c]">
+                <div className="flex items-center justify-between">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-400/10 text-indigo-300 transition group-hover:bg-indigo-400/20">
+                    <Icon size={21} />
+                  </div>
+                  <ChevronRight size={17} className="text-slate-700 transition group-hover:translate-x-1 group-hover:text-indigo-300" />
+                </div>
+                <h3 className="mt-8 text-lg font-semibold">{title}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-400">{description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="border-y border-white/10 bg-white/[0.025]">
+          <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-28">
+            <div className="max-w-2xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-300">Designed around you</p>
+              <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+                The same platform. A different kind of advantage.
+              </h2>
+            </div>
+
+            <div className="mt-12 grid gap-5 lg:grid-cols-2">
+              {roleBenefits.map(({ eyebrow, title, description, icon: Icon, points }) => (
+                <div key={eyebrow} className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#0d1222] p-7 sm:p-9">
+                  <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-indigo-500/10 blur-2xl" />
+                  <div className="relative">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-300">{eyebrow}</p>
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5">
+                        <Icon size={20} />
+                      </div>
+                    </div>
+                    <h3 className="mt-7 max-w-sm text-2xl font-semibold tracking-tight">{title}</h3>
+                    <p className="mt-4 max-w-lg text-sm leading-7 text-slate-400">{description}</p>
+                    <div className="mt-7 space-y-3">
+                      {points.map((point) => (
+                        <div key={point} className="flex items-center gap-3 text-sm text-slate-300">
+                          <CheckCircle2 size={17} className="shrink-0 text-emerald-300" />
+                          {point}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -286,6 +448,45 @@ const LandingPage = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-6 pb-20 lg:px-8 lg:pb-28">
+          <div className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
+            <div className="rounded-[2rem] border border-white/10 bg-[#0d1222] p-7 sm:p-9">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-400/10 text-emerald-300">
+                <LockKeyhole size={21} />
+              </div>
+              <h2 className="mt-7 text-2xl font-semibold tracking-tight">A more thoughtful way to build trust.</h2>
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-400">
+                Great startup relationships need more than a quick introduction. They need context,
+                consistent communication, and a clear next step. Venroh is designed to make every
+                part of that journey feel professional and intentional.
+              </p>
+              <div className="mt-8 grid gap-4 sm:grid-cols-3">
+                {[
+                  ['01', 'Context first', 'See the story before the pitch.'],
+                  ['02', 'Conversations matter', 'Keep the right people connected.'],
+                  ['03', 'Momentum wins', 'Make progress visible and actionable.']
+                ].map(([number, title, detail]) => (
+                  <div key={number} className="border-t border-white/10 pt-4">
+                    <p className="text-xs font-semibold text-indigo-300">{number}</p>
+                    <p className="mt-3 text-sm font-semibold">{title}</p>
+                    <p className="mt-2 text-xs leading-5 text-slate-500">{detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-[2rem] border border-indigo-300/15 bg-indigo-400/10 p-7 sm:p-9">
+              <Video size={23} className="text-indigo-200" />
+              <h3 className="mt-7 text-2xl font-semibold tracking-tight">Ready when the conversation is.</h3>
+              <p className="mt-4 text-sm leading-7 text-slate-300">
+                Start with a profile. Continue with a chat. Meet when there is something worth exploring.
+              </p>
+              <Link to="/register" className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-white hover:text-indigo-200">
+                Join the network <ArrowRight size={17} />
+              </Link>
             </div>
           </div>
         </section>
